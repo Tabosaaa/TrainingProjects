@@ -1,6 +1,6 @@
 package main
 
-//class i must see: the http.Handler Type
+//class i must see: the http.HandlerFunc Type
 import (
 	"fmt"
 	"net/http"
