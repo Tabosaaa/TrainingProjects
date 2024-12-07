@@ -26,6 +26,22 @@ const clienteController = {
       res.status(500).json({ error: 'Erro ao criar novo cliente.' });
     }
   },
+
+  excludeClient: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({ error: 'O campo "id" é obrigatório.' });
+      return;
+    }
+
+    try {
+      await ClienteModel.excludeClient(Number(id));
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao excluir cliente.' });
+    }
+  }
 };
 
 export default clienteController;

@@ -30,6 +30,16 @@ const Cliente = {
       throw error;
     }
   },
+
+  excludeClient: async (id: number): Promise<void> => {
+    try {
+      const query = 'DELETE FROM Cliente WHERE id = ?';
+      const values = [id];
+      await db.query(query, values);
+    } catch (error) {
+      throw error;
+    }
+  }
 };
 
 export default Cliente;
