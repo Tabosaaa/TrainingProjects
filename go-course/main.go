@@ -1,8 +1,9 @@
 package main
 
-//class i must see: the http.HandlerFunc Type
+//class i must see: using chi
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -36,20 +37,27 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 `)
 }
 
-func pathHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
-		homeHandler(w, r)
-	case "/contact":
-		contactHandler(w, r)
-	case "/faq":
-		faqHandler(w, r)
-	default:
-		http.Error(w, "Not Found", http.StatusNotFound)
-	}
-}
+//func pathHandler(w http.ResponseWriter, r *http.Request) {
+//	switch r.URL.Path {
+//	case "/":
+//		homeHandler(w, r)
+//	case "/contact":
+//		contactHandler(w, r)
+//	case "/faq":
+//		faqHandler(w, r)
+//	default:
+//		http.Error(w, "Not Found", http.StatusNotFound)
+//	}
+//}
 
 func main() {
+	r := chi.NewRouter()
+	r.Get("/", homeHandler)
+	r.Get("/contact", contactHandler)
+	r.Get("/faq", faqHandler)
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Not Found", http.StatusNotFound)
+	})
 	fmt.Println("Server is running on port http://localhost:3000")
-	http.ListenAndServe(":3000", http.HandlerFunc(pathHandler))
+	http.ListenAndServe(":3000", r)
 }
