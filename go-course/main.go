@@ -1,6 +1,6 @@
 package main
 
-//class i must see: using chi
+//class i must see: why do we use server side rendering?
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
