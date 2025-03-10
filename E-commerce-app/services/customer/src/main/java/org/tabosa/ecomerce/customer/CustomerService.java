@@ -56,7 +56,20 @@ public class CustomerService {
     }
 
     public Boolean existById(String customerId) {
-        return repository.findById(customerId);
+        return repository.findById(customerId)
+                .isPresent();
 
+    }
+
+    public CustomerResponse findById(String customerId) {
+        return repository.findById(customerId)
+                .map(mapper::fromCustomer)
+                .orElseThrow(() -> new CustomerNotFoundException(
+                        format("Cannot find customer:: No customer found with the provided ID:: %s",customerId)
+                ));
+    }
+
+    public void deleteCustumer(String customerId) {
+        repository.deleteById(customerId);
     }
 }
