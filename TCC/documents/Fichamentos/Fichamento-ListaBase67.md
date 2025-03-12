@@ -8,6 +8,8 @@ Este artigo realiza um estudo empírico dos bugs relacionados ao desempenho em a
 
 ## 2. Fichamento Bibliográfico 
 
+* _High performance computing (HPC)_: uso de computadores poderosos e processamento paralelo para resolver problemas computacionais complexos e intensivos em tempo reduzido
+
 * _Implementação Ineficiente de Algoritmos e Estruturas de Dados_: categoria mais frequente de problemas de desempenho, responsável por 39,3% dos casos analisados, envolvendo operações desnecessárias, redundantes ou computacionalmente caras (página 196).
 
 * _Código Ineficiente para Microarquitetura Específica_: segunda categoria mais prevalente (31,2%), abrangendo questões como acesso ineficiente à memória (CPU/GPU), geração subótima de código por compiladores, e falta de otimização específica para hardware (página 197).
