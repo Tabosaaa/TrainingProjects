@@ -20,9 +20,7 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 	if err != nil {
 		return Template{}, fmt.Errorf("parsing template: %w", err)
 	}
-	return Template{
-		htmlTpl: htmlTpl,
-	}, nil
+	return Template{htmlTpl: htmlTpl}, nil
 }
 
 func Parse(filepath string) (Template, error) {
