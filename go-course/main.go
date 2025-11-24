@@ -1,6 +1,6 @@
 package main
 
-//Next class: https://courses.calhoun.io/lessons/les_wdv2_intro_to_databases
+//Next class: https://courses.calhoun.io/lessons/les_wdv2_creating_users_table
 
 import (
 	"log"
