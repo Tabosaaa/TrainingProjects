@@ -1,0 +1,4 @@
+# Repository-wide ignores
+.DS_Store
+*.zip
+*.mov
