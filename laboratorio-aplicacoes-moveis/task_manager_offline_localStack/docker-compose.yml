@@ -1,0 +1,31 @@
+services:
+  localstack:
+    container_name: localstack-task-manager
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,dynamodb,sns,sqs
+      - DEBUG=1
+      - LS_LOG=INFO
+      - PERSISTENCE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - task-manager-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  localstack-data:
+    driver: local
+
+networks:
+  task-manager-network:
+    driver: bridge

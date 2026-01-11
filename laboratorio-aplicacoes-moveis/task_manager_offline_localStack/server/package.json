@@ -1,0 +1,19 @@
+{
+  "name": "task-manager-api",
+  "version": "1.0.0",
+  "description": "API REST para Task Manager Offline-First com LocalStack",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "USE_LOCALSTACK=true node src/server.js",
+    "dev": "USE_LOCALSTACK=true node src/server.js",
+    "init-localstack": "node scripts/init-localstack.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0",
+    "sql.js": "^1.10.0",
+    "aws-sdk": "^2.1499.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}
