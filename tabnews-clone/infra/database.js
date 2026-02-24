@@ -1,4 +1,4 @@
-import Client from "pg";
+import { Client } from "pg";
 
 async function query(queryObject) {
   const client = new Client({
