@@ -1,19 +1,39 @@
-import { Client } from "pg";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  host: process.env.POSTGRES_HOST,
+  port: process.env.POSTGRES_PORT,
+  user: process.env.POSTGRES_USER,
+  database: process.env.POSTGRES_DB,
+  password: process.env.POSTGRES_PASSWORD,
+});
 
 async function query(queryObject) {
-  const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-  });
-  await client.connect();
-  const result = await client.query(queryObject);
-  client.end();
-  return result;
+  return pool.query(queryObject);
+}
+
+async function getClient() {
+  return pool.connect();
+}
+
+async function withTransaction(callback) {
+  const client = await getClient();
+
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export default {
-  query: query,
+  query,
+  getClient,
+  withTransaction,
 };
