@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz FilaFácil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: uma "ficha de coleta" por pergunta, numa coluna estreita, como um romaneio de despacho. */
+:root {
+  --bg: #eef1f4;
+  --paper: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --line: #d3dae1;
+  --accent: #1d5fa8;
+  --accent-soft: #e3edf8;
+  --ok: #1f7a4d;
+  --ok-soft: #e2f3ea;
+  --bad: #b3372b;
+  --bad-soft: #f9e4e1;
+  --code-bg: #f3f5f8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171d; --paper: #19222b; --ink: #e4e9ee; --muted: #93a1ae; --line: #2c3945;
+    --accent: #6ea8e8; --accent-soft: #1d2d3f; --ok: #5cc48f; --ok-soft: #173427;
+    --bad: #ef7f72; --bad-soft: #3d201d; --code-bg: #121920; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171d; --paper: #19222b; --ink: #e4e9ee; --muted: #93a1ae; --line: #2c3945;
+  --accent: #6ea8e8; --accent-soft: #1d2d3f; --ok: #5cc48f; --ok-soft: #173427;
+  --bad: #ef7f72; --bad-soft: #3d201d; --code-bg: #121920; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  padding-inline: 16px; padding-block: 24px 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 20px; }
+
+header { display: grid; gap: 12px; }
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.meta { font: 600 0.8rem var(--font-mono); color: var(--muted); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+
+.track { display: flex; gap: 3px; }
+.track i { flex: 1; height: 6px; border-radius: 1px; background: var(--line); }
+.track i.ok { background: var(--ok); }
+.track i.bad { background: var(--bad); }
+.track i.now { background: var(--accent); }
+
+.ticket {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 1px 0 var(--line), 0 12px 28px -18px rgb(0 0 0 / 0.35);
+  display: grid;
+}
+.ticket-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 20px; border-bottom: 1px dashed var(--line);
+  font: 600 0.75rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.status { padding: 3px 8px; border-radius: 3px; border: 1px solid currentColor; }
+.status.pendente { color: var(--accent); }
+.status.coletada { color: var(--ok); background: var(--ok-soft); }
+.status.cancelada { color: var(--bad); background: var(--bad-soft); }
+
+.ticket-body { padding: 20px; display: grid; gap: 16px; min-width: 0; }
+.question { margin: 0; font-size: 1.15rem; font-weight: 600; line-height: 1.4; text-wrap: pretty; }
+pre {
+  margin: 0; padding: 12px 14px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px;
+  font: 0.85rem/1.5 var(--font-mono); overflow-x: auto; white-space: pre;
+}
+code { font-family: var(--font-mono); font-size: 0.92em; }
+
+.options { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.opt {
+  width: 100%; text-align: left; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper);
+  color: var(--ink); font: inherit; cursor: pointer;
+  transition: border-color 120ms, background-color 120ms, transform 120ms;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.opt:active:not(:disabled) { transform: translateY(1px); }
+.opt:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt:disabled { cursor: default; }
+.key {
+  font: 600 0.8rem/1.6 var(--font-mono); text-align: center; border: 1px solid var(--line); border-radius: 3px;
+  color: var(--muted);
+}
+.opt-text { min-width: 0; }
+.opt.correct { border-color: var(--ok); background: var(--ok-soft); }
+.opt.correct .key { border-color: var(--ok); color: var(--ok); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt.wrong .key { border-color: var(--bad); color: var(--bad); }
+.opt.dim { opacity: 0.55; }
+
+.feedback { border-left: 4px solid var(--ok); background: var(--ok-soft); padding: 14px 16px; border-radius: 0 4px 4px 0; display: grid; gap: 6px; }
+.feedback.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.feedback strong { font-size: 0.95rem; }
+.feedback p { margin: 0; }
+.feedback .label { font: 600 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hint { font-size: 0.8rem; color: var(--muted); }
+.btn {
+  font: 600 0.95rem var(--font-body); padding: 10px 18px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--paper);
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--accent); }
+
+/* Resultado */
+.result { padding: 24px 20px; display: grid; gap: 20px; }
+.score { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.score b { font: 700 3rem/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.score span { color: var(--muted); }
+.result h2 { margin: 0; font-size: 1.25rem; text-wrap: balance; }
+.result h3 { margin: 0 0 8px; font: 600 0.75rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td { padding: 7px 0; border-bottom: 1px solid var(--line); }
+td:last-child { text-align: right; font-family: var(--font-mono); }
+td .bar { display: inline-block; vertical-align: middle; width: 80px; height: 6px; background: var(--line); margin-right: 8px; border-radius: 1px; overflow: hidden; }
+td .bar i { display: block; height: 100%; background: var(--ok); }
+.review { display: grid; gap: 12px; }
+.review article { border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+.review p { margin: 0; }
+.review .q { font-weight: 600; }
+.review .a { color: var(--ok); }
+.review .w { color: var(--muted); font-size: 0.9rem; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Quiz <span>FilaFácil</span></h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="track" id="track" aria-hidden="true"></div>
+  </header>
+  <section id="stage" aria-live="polite"></section>
+</main>
+
+<script>
+// Cada pergunta: tópico (seção da AULA.md), enunciado, código opcional, opções (a primeira é a correta,
+// as opções são embaralhadas na tela) e o porquê.
+const PERGUNTAS = [
+  { t: 'O problema', q: 'Qual é o objetivo central da refatoração do FilaFácil?',
+    o: ['Fazer cada tipo de mudança mexer em um lugar só', 'Adicionar funcionalidades novas de negócio', 'Trocar o Express por um framework mais moderno', 'Deixar o código com o menor número de linhas possível'],
+    w: 'O PDF diz que o sistema já funciona, mas resiste a mudanças. A refatoração melhora o design interno sem expandir o escopo: mudar a regra de prioridade, a notificação ou a criação da coleta deve tocar um único ponto.' },
+  { t: 'O problema', q: 'No service "antes", qual dor esta linha causa?', c: 'const db = new PostgresClient();',
+    o: ['O service fica preso ao Postgres e não dá para testar sem banco', 'Deixa o código mais lento em produção', 'Viola a regra de nomes do TypeScript', 'Nenhuma, criar a dependência no service é a prática recomendada'],
+    w: 'Quando o service cria a própria dependência, você não consegue trocá-la por um fake. O teste passa a precisar de um banco real, e trocar de banco obriga a editar o service.' },
+
+  { t: 'Organização', q: 'O que significa organizar o projeto "por domínio" (feature-based)?',
+    o: ['Agrupar tudo de um assunto do negócio numa pasta, como src/coletas/', 'Criar pastas globais controllers/, services/ e repositories/', 'Colocar todo o código num único arquivo', 'Separar os testes numa pasta tests/ na raiz'],
+    w: 'Por domínio, tudo que é de "coletas" (controller, service, contratos, patterns e testes) mora junto. Para entender ou apagar uma feature você olha uma pasta só. As pastas por tipo técnico espalham uma feature pelo projeto inteiro.' },
+  { t: 'Organização', q: 'Onde ficam os testes neste projeto?',
+    o: ['Ao lado do código que testam (*.test.ts dentro de src/coletas/)', 'Numa pasta global test/', 'Dentro do server.ts', 'Não há testes, o PDF não exige'],
+    w: 'Teste ao lado do código faz parte da organização por domínio: o PDF pede "estratégias, fábrica, notificadores e testes no mesmo domínio".' },
+  { t: 'Organização', q: 'Por que cada estratégia e cada observador tem o seu próprio arquivo numa subpasta (prioridade/, eventos/)?',
+    o: ['Porque uma nova variação vira um arquivo novo, sem editar nenhum arquivo existente', 'Porque o TypeScript exige uma classe por arquivo', 'Para separar o projeto por tipo técnico dentro do domínio', 'Para que cada arquivo tenha menos de 10 linhas'],
+    w: 'A subpasta agrupa o que varia. Adicionar uma regra de prioridade vira "criar prioridade/prioridade-manual.ts", e o Aberto/Fechado aparece na própria árvore de arquivos. Não é organização por tipo técnico: tudo continua dentro de coletas/.' },
+  { t: 'Organização', q: 'O que o server.ts sabe sobre o domínio de coletas?',
+    o: ['Só chama criarModuloColetas(config) e pluga as rotas prontas', 'Instancia o service, o repositório e os observadores', 'Escolhe a estratégia com uma cadeia de if/else', 'Valida os dados das coletas'],
+    w: 'Quem monta as peças é o coleta.module.ts, que fica dentro do domínio. O server.ts só lê o ambiente e sobe o HTTP. Para ele, coletas é uma caixa fechada, e um novo domínio custaria só uma linha a mais ali.' },
+
+  { t: 'Contratos', q: 'Quando vale a pena criar uma interface (contrato)?',
+    o: ['Quando existe variação real de comportamento, ou seja, mais de uma implementação', 'Para toda classe do sistema, por padrão', 'Só para classes com mais de 100 linhas', 'Sempre que a classe for injetada'],
+    w: 'Uma interface só se paga quando esconde uma variação que já existe. O Repository tem duas versões (JSON e memória), as estratégias são várias e os observadores também. Interface com uma única implementação é abstração excessiva.' },
+  { t: 'Contratos', q: 'Por que a ColetaFactory NÃO tem uma interface IColetaFactory?',
+    o: ['Porque só existe um jeito de montar uma coleta válida, então a interface seria burocracia', 'Porque o TypeScript não permite interface em factories', 'Porque factories não podem ser injetadas', 'Porque ela só é usada nos testes'],
+    w: 'Não há variação: nenhuma segunda factory existe nem está prevista. Ela continua sendo injetada no service (DI não exige interface), só não ganhou um contrato inútil.' },
+  { t: 'Contratos', q: 'O que esta linha no coleta.service.ts revela sobre o design?', c: "import type { ColetaRepository, EstrategiaPrioridade } from './coleta.contratos.ts';",
+    o: ['O service depende de contratos, não de implementações concretas', 'O service cria o repositório internamente', 'O service só funciona com o arquivo JSON', 'É um import inválido, porque interfaces não podem ser importadas'],
+    w: '"import type" traz só o tipo, que some ao executar. É a prova visível da Inversão de Dependência: o service não conhece ColetaRepositoryJson.' },
+
+  { t: 'SOLID', q: 'Você quer mudar o peso do cliente "premium" de 2 para 5. Qual arquivo muda?',
+    o: ['prioridade/prioridade-por-tipo-cliente.ts', 'coleta.service.ts', 'coleta.controller.ts', 'coleta.factory.ts'],
+    w: 'Responsabilidade Única: a regra de prioridade tem um único dono, e só ele muda quando a regra muda. O service não sabe como a prioridade é calculada.' },
+  { t: 'SOLID', q: 'Criar uma nova regra de prioridade adicionando uma classe, sem editar o service, é qual princípio?',
+    o: ['O: Aberto/Fechado', 'S: Responsabilidade Única', 'L: Substituição de Liskov', 'I: Segregação de Interface'],
+    w: 'Aberto para extensão (nova classe), fechado para modificação (o service já testado não é tocado).' },
+  { t: 'SOLID', q: 'O que diz a Inversão de Dependência (D)?',
+    o: ['Módulos de alto nível dependem de abstrações, não de detalhes de baixo nível', 'Toda dependência deve ser criada com new dentro da classe', 'Classes filhas devem sobrescrever os métodos da classe pai', 'Cada classe deve ter no máximo uma dependência'],
+    w: 'O service (regra de negócio) depende de ColetaRepository (abstração), não do arquivo JSON (detalhe). Quem conhece os detalhes é o coleta.module.ts.' },
+  { t: 'SOLID', q: 'O teste usa { nome: "fixa", calcular: () => 100 } como estratégia e o service funciona normalmente. Isso demonstra qual princípio?',
+    o: ['L: Liskov, qualquer implementação do contrato pode substituir outra', 'S: Responsabilidade Única', 'O: Aberto/Fechado', 'Nenhum, é só um atalho de teste'],
+    w: 'Liskov: se algo cumpre o contrato EstrategiaPrioridade, deve funcionar no lugar de qualquer outra estratégia sem o service perceber.' },
+  { t: 'SOLID', q: 'ObservadorColeta tem um único método, notificar(). Qual princípio isso favorece?',
+    o: ['I: Segregação de Interface, com interfaces pequenas e focadas', 'D: Inversão de Dependência', 'O: Aberto/Fechado', 'L: Liskov'],
+    w: 'Ninguém é obrigado a implementar métodos que não usa. Interfaces pequenas são fáceis de implementar, de trocar e de "fakear".' },
+
+  { t: 'Dependency Injection', q: 'O que é Dependency Injection?',
+    o: ['Receber as dependências prontas (pelo construtor ou parâmetro) em vez de criá-las', 'Usar um framework como NestJS ou InversifyJS', 'Usar decorators como @Injectable', 'Herdar de uma classe base que fornece as dependências'],
+    w: 'DI é só "não crie, receba". Passar pelo construtor já é DI, sem framework nenhum. O controller também recebe o service por parâmetro: criarRotasColetas(service).' },
+  { t: 'Dependency Injection', q: 'O que é o Composition Root e onde ele está?',
+    o: ['O único lugar que faz new das peças concretas e as conecta: o coleta.module.ts', 'A classe base de todos os services: coleta.service.ts', 'A pasta raiz do projeto', 'O arquivo de contratos: coleta.contratos.ts'],
+    w: 'Só o coleta.module.ts sabe que o repositório é de arquivo, que a estratégia vem da variável ESTRATEGIA e quais observadores estão inscritos. Trocar qualquer peça = mudar só esse arquivo. O server.ts só pluga as rotas prontas.' },
+  { t: 'Dependency Injection', q: 'Qual o problema deste construtor?', c: "class ColetaService {\n  constructor() {\n    this.repositorio = new ColetaRepositoryJson('data/coletas.json');\n  }\n}",
+    o: ['O service fica preso ao arquivo e os testes não conseguem usar um fake', 'Falta o async no construtor', 'O caminho do arquivo deveria ser absoluto', 'Nenhum, isso é injeção de dependência'],
+    w: 'É o contrário de DI: o service cria a dependência. O PDF cobra "0 new() dentro do service" justamente para permitir trocar implementações reais por fakes.' },
+  { t: 'Dependency Injection', q: 'Por que o service recebe um objeto deps em vez de usar constructor(private deps: ...)?',
+    o: ['O Node roda TS apagando os tipos (erasableSyntaxOnly) e parameter properties geram código', 'Parameter properties são proibidas pelo SOLID', 'Porque objetos são mais rápidos que parâmetros', 'Porque o Express exige esse formato'],
+    w: 'O Node 24 executa .ts só removendo as anotações de tipo. "private deps" no construtor gera uma atribuição escondida, então não é "apagável". O objeto nomeado também evita trocar a ordem dos parâmetros sem querer.' },
+  { t: 'Dependency Injection', q: 'Das peças abaixo, qual o service NÃO recebe por injeção?',
+    o: ['A classe de erro ErroNaoEncontrado', 'O repositório', 'A estratégia de prioridade', 'O publicador de eventos'],
+    w: 'Os new ErroValidacao / new ErroNaoEncontrado criam valores (erros) e não dependências. Não há o que trocar num teste, então não faz sentido injetar.' },
+
+  { t: 'Factory', q: 'Qual é a responsabilidade da ColetaFactory?',
+    o: ['Validar os dados e montar uma coleta válida com id, status inicial, data e prioridade', 'Validar, montar e salvar a coleta no repositório', 'Notificar os observadores de que a coleta foi criada', 'Transformar a coleta em resposta HTTP'],
+    w: 'A Factory cria e não salva. O PDF pede para "separar criação de persistência". Salvar é do repositório, e notificar é do service via eventos.' },
+  { t: 'Factory', q: 'Por que criar() recebe a entrada como unknown e não como DadosNovaColeta?',
+    o: ['Porque o dado vem de fora (HTTP), e unknown obriga a validar antes de usar', 'Porque unknown é mais rápido que tipos concretos', 'Porque DadosNovaColeta não existe em tempo de execução', 'Para desligar a checagem de tipos, como o any'],
+    w: 'Tipar o body como DadosNovaColeta seria "mentir" para o compilador, porque o cliente pode mandar qualquer coisa. unknown força a validação, e o any desligaria tudo.' },
+  { t: 'Factory', q: 'Qual o benefício de só a Factory montar coletas?',
+    o: ['Ninguém esquece o status inicial ou a data: a regra de criação existe em um único lugar', 'As coletas ficam mais leves na memória', 'Dispensa a validação no restante do sistema e no banco', 'Permite ter várias formas diferentes de criar coleta'],
+    w: 'Se cada lugar montasse a coleta à mão, um dia alguém esqueceria o status: "pendente" e as versões divergiriam. Centralizar evita isso.' },
+
+  { t: 'Strategy', q: 'O Strategy substitui principalmente o quê?',
+    o: ['Uma cadeia de if/else que escolhe o algoritmo', 'O repositório de dados', 'A validação da Factory', 'Os testes unitários'],
+    w: 'Cada regra vira uma classe com o mesmo contrato (calcular). Quem usa chama calcular() sem saber qual regra é, e o if que crescia a cada regra some do service.' },
+  { t: 'Strategy', q: 'Onde a estratégia usada em produção é escolhida?',
+    o: ['No coleta.module.ts, a partir da variável de ambiente ESTRATEGIA', 'Dentro do service, com um if', 'Na Factory, a cada coleta', 'No controller, pela URL'],
+    w: 'A escolha acontece uma vez, na inicialização (tabela ESTRATEGIAS), e é injetada. "ESTRATEGIA=cliente npm start" muda a regra sem mudar código.' },
+  { t: 'Strategy', q: 'Você cria a estratégia PrioridadeManual. Quantas linhas do coleta.service.ts mudam?',
+    o: ['Nenhuma', 'Uma, para adicionar um if', 'Todas as que usam prioridade', 'Depende do número de coletas'],
+    w: 'É o teste real do Strategy + Aberto/Fechado: novo arquivo em prioridade/, registro no coleta.module.ts, e o service intacto.' },
+  { t: 'Strategy', q: 'Com as coletas "Mercado Sol" (comum, 10 pacotes) e "Banco Azul" (corporativo, 2 pacotes), quem vem primeiro com ESTRATEGIA=cliente?',
+    o: ['Banco Azul, porque corporativo pesa 3 e comum pesa 1', 'Mercado Sol, porque tem mais pacotes', 'Empate, porque a ordem é a de criação', 'Nenhuma, listar não ordena'],
+    w: 'PrioridadePorTipoCliente ignora os pacotes e usa o peso do tipo. O service ordena por prioridade decrescente. Com ESTRATEGIA=pacotes, o Mercado Sol viria primeiro.' },
+
+  { t: 'Observer', q: 'No Observer do projeto, qual é o papel da classe EventosColeta?',
+    o: ['Sujeito: guarda a lista de observadores e avisa todos quando algo acontece', 'Observador: registra logs', 'Repositório de eventos no disco', 'Fila de mensagens como o Kafka'],
+    w: 'EventosColeta é o sujeito (inscrever/publicar). LogOperacional, NotificacaoRota e ContadorEventos são os observadores, e cada um reage do seu jeito.' },
+  { t: 'Observer', q: 'Por que publicar() envolve cada notificar() num try/catch?',
+    o: ['Para que um observador quebrado não derrube a operação principal nem os outros observadores', 'Porque o TypeScript exige try/catch em loops', 'Para tentar notificar de novo em caso de erro', 'Para esconder erros do log'],
+    w: 'Um efeito secundário (log, aviso) não pode fazer a requisição falhar com a coleta já salva. O erro é logado com console.error, não é engolido em silêncio. Existe um teste só para isso.' },
+  { t: 'Observer', q: 'Quando a NotificacaoRota realmente age?',
+    o: ['Quando o status de uma coleta é atualizado para em_rota', 'Em todo evento de coleta', 'Só quando uma coleta é criada', 'Quando uma coleta é deletada'],
+    w: 'Cada observador filtra o que interessa a ele. A NotificacaoRota checa evento.tipo === "coleta.status_atualizado" && status === "em_rota". O service não precisa saber disso.' },
+  { t: 'Observer', q: 'Qual a diferença entre este Observer e usar Kafka/RabbitMQ?',
+    o: ['O Observer roda em memória no mesmo processo. Mensageria leva eventos entre processos e o PDF proíbe', 'Nenhuma, são a mesma coisa', 'O Observer é mais lento que o Kafka', 'O Kafka não usa o conceito de observador'],
+    w: 'É a mesma ideia (publicar e reagir) em escalas diferentes. Aqui tudo é síncrono e local, suficiente e sem infraestrutura extra. O PDF diz "não adicionar mensageria real".' },
+
+  { t: 'Testes', q: 'No teste, o ColetaRepositoryMemoria é um exemplo de:',
+    o: ['Fake: uma implementação real, só que simplificada', 'Spy: anota as chamadas recebidas', 'Stub: devolve sempre o mesmo valor fixo', 'Mock de banco de dados real'],
+    w: 'Ele funciona de verdade (salva, busca, filtra), só que num Map em vez de disco. Isso é um fake.' },
+  { t: 'Testes', q: 'E o ObservadorEspiao, que só guarda os eventos em recebidos[]?',
+    o: ['Spy (espião)', 'Fake', 'Stub', 'Factory'],
+    w: 'O espião registra o que recebeu para você verificar depois: assert.deepEqual(espiao.recebidos, [...]).' },
+  { t: 'Testes', q: 'Qual é a ordem do padrão AAA?',
+    o: ['Arrange, Act, Assert (preparar, agir, verificar)', 'Assert, Act, Arrange', 'Act, Arrange, Assert', 'Arrange, Assert, Act'],
+    w: 'Primeiro monta o cenário (montarService), depois executa a ação (cadastrar) e por fim verifica o resultado (assert).' },
+  { t: 'Testes', q: 'O que torna possível testar o service sem banco e sem disco?',
+    o: ['A Dependency Injection, que permite passar um repositório fake no construtor', 'O node:test, que simula o disco automaticamente', 'O TypeScript, que remove o acesso a arquivos', 'O Express, que isola o service'],
+    w: 'É aqui que o design se paga: como o service recebe o repositório, o teste liga um fake no lugar do arquivo JSON.' },
+
+  { t: 'Fluxo e erros', q: 'Quem transforma um ErroValidacao em resposta HTTP 400?',
+    o: ['O tratarErros, no coleta.controller.ts', 'O próprio service', 'A Factory', 'O repositório'],
+    w: 'O service lança erros do domínio e nunca fala "HTTP". A tradução para 400/404 fica na borda (controller), e o service poderia ser usado por uma CLI sem mudar nada.' },
+  { t: 'Fluxo e erros', q: 'Por que a rota GET /resumo é declarada antes de GET /:id?',
+    o: ['Senão o Express leria "resumo" como se fosse um id', 'Por ordem alfabética', 'Porque o resumo é mais importante', 'Não faz diferença a ordem'],
+    w: 'O Express testa as rotas na ordem declarada. "/:id" casa com qualquer texto, inclusive "resumo".' },
+  { t: 'Fluxo e erros', q: 'Num POST /coletas bem-sucedido, qual é a ordem dentro do service?',
+    o: ['Factory cria, repositório salva, eventos publicam', 'Eventos publicam, Factory cria, repositório salva', 'Repositório salva, Factory cria, eventos publicam', 'Factory cria, eventos publicam, repositório salva'],
+    w: 'Só se anuncia o que já aconteceu: primeiro a coleta válida é criada, depois persistida, e só então os observadores são avisados. Se a validação falhar, nada é salvo nem notificado.' },
+
+  { t: 'TypeScript', q: 'O que a assinatura ehStatusValido(valor: unknown): valor is StatusColeta define?',
+    o: ['Um type guard: se retornar true, o TS passa a saber que valor é StatusColeta', 'Uma conversão de tipo forçada (cast)', 'Uma função que sempre lança erro', 'Um enum'],
+    w: 'Type guards fazem o "estreitamento" (narrowing): depois do if, o compilador trata o valor com o tipo certo, sem as.' },
+  { t: 'TypeScript', q: 'Neste tipo, o que faz dele uma "união discriminada"?', c: "type EventoColeta =\n  | { tipo: 'coleta.criada'; coleta: Coleta }\n  | { tipo: 'coleta.status_atualizado'; coleta: Coleta; statusAnterior: ... };",
+    o: ['O campo tipo, com um valor literal diferente em cada variante', 'O campo coleta, presente em todas', 'O uso do caractere |', 'Ser exportado'],
+    w: 'Checar evento.tipo diz ao TS qual variante você tem. Depois de tipo === "coleta.status_atualizado", o statusAnterior fica disponível.' },
+  { t: 'TypeScript', q: 'Por que atualizarStatus faz { ...atual, status } em vez de atual.status = status?',
+    o: ['Imutabilidade: cria um objeto novo e evita alterar dados por referência sem querer', 'Porque é mais rápido', 'Porque o TypeScript proíbe atribuir propriedades', 'Por exigência do Express'],
+    w: 'Mutar o objeto original poderia alterar o "banco" em memória ou dados que outra parte do código ainda usa. A cópia deixa claro o antes e o depois, que é também o que o evento publica (statusAnterior).' },
+
+  { t: 'Over-engineering', q: 'Qual destas decisões seria over-engineering NESTE projeto?',
+    o: ['Adicionar um container de DI (Inversify) para 4 dependências', 'Ter uma interface para o repositório', 'Ter duas estratégias de prioridade', 'Validar a entrada na Factory'],
+    w: 'Com 4 dependências, o new manual no coleta.module.ts é mais claro que um framework. As outras três opções resolvem variações ou riscos reais.' },
+  { t: 'Over-engineering', q: 'Qual frase resume a regra por trás do que ficou de fora?',
+    o: ['Uma abstração só se paga quando já existe a variação que ela esconde', 'Quanto mais patterns, melhor o design', 'Toda classe precisa de uma interface', 'Código genérico é sempre mais reutilizável'],
+    w: 'O PDF pede "não aplicar todos os patterns possíveis" e "não usar abstrações genéricas sem necessidade". Abstrair para uma variação imaginária só adiciona leitura.' },
+];
+
+const stage = document.getElementById('stage');
+const track = document.getElementById('track');
+const meta = document.getElementById('meta');
+
+let fila = [];      // índices das perguntas desta rodada
+let atual = 0;      // posição na fila
+let respostas = []; // { idx, acertou, escolhida }
+let respondida = false;
+
+function embaralhar(lista) {
+  const copia = [...lista];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function el(tag, props = {}, ...filhos) {
+  const node = document.createElement(tag);
+  Object.assign(node, props);
+  for (const f of filhos) node.append(f);
+  return node;
+}
+
+function iniciar(indices) {
+  fila = indices;
+  atual = 0;
+  respostas = [];
+  renderPergunta();
+}
+
+function renderTrack() {
+  track.replaceChildren(...fila.map((_, i) => {
+    const r = respostas[i];
+    return el('i', { className: r ? (r.acertou ? 'ok' : 'bad') : (i === atual ? 'now' : '') });
+  }));
+  const acertos = respostas.filter((r) => r.acertou).length;
+  meta.textContent = `${String(Math.min(atual + 1, fila.length)).padStart(2, '0')}/${String(fila.length).padStart(2, '0')} · ${acertos} acerto${acertos === 1 ? '' : 's'}`;
+}
+
+function renderPergunta() {
+  respondida = false;
+  const idx = fila[atual];
+  const p = PERGUNTAS[idx];
+  const opcoes = embaralhar(p.o.map((texto, i) => ({ texto, correta: i === 0 })));
+
+  const status = el('span', { className: 'status pendente', textContent: 'pendente' });
+  const head = el('div', { className: 'ticket-head' },
+    el('span', { textContent: `Coleta #${String(atual + 1).padStart(2, '0')} · ${p.t}` }), status);
+
+  const lista = el('ol', { className: 'options' });
+  const botoes = opcoes.map((op, i) => {
+    const b = el('button', { className: 'opt', type: 'button' },
+      el('span', { className: 'key', textContent: String(i + 1) }),
+      el('span', { className: 'opt-text', textContent: op.texto }));
+    b.addEventListener('click', () => responder(i));
+    lista.append(el('li', {}, b));
+    return b;
+  });
+
+  const feedback = el('div', { hidden: true });
+  const proximo = el('button', { className: 'btn', type: 'button', hidden: true,
+    textContent: atual === fila.length - 1 ? 'Ver resultado' : 'Próxima pergunta' });
+  proximo.addEventListener('click', avancar);
+  const dica = el('span', { className: 'hint', textContent: 'Atalhos: teclas 1–4 para responder, Enter para avançar' });
+
+  const body = el('div', { className: 'ticket-body' }, el('p', { className: 'question', textContent: p.q }));
+  if (p.c) body.append(el('pre', {}, el('code', { textContent: p.c })));
+  body.append(lista, feedback, el('div', { className: 'actions' }, dica, proximo));
+
+  stage.replaceChildren(el('article', { className: 'ticket' }, head, body));
+  renderTrack();
+  botoes[0].focus({ preventScroll: true });
+
+  function responder(escolha) {
+    if (respondida) return;
+    respondida = true;
+    const acertou = opcoes[escolha].correta;
+    respostas[atual] = { idx, acertou, escolhida: opcoes[escolha].texto };
+
+    botoes.forEach((b, i) => {
+      b.disabled = true;
+      if (opcoes[i].correta) b.classList.add('correct');
+      else if (i === escolha) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+
+    status.className = `status ${acertou ? 'coletada' : 'cancelada'}`;
+    status.textContent = acertou ? 'coletada ✓' : 'cancelada ✗';
+
+    feedback.className = `feedback ${acertou ? '' : 'bad'}`;
+    feedback.replaceChildren(
+      el('strong', { textContent: acertou ? 'Isso mesmo!' : 'Não foi dessa vez.' }),
+      ...(acertou ? [] : [el('p', {}, el('span', { className: 'label', textContent: 'Resposta correta · ' }), p.o[0])]),
+      el('p', {}, el('span', { className: 'label', textContent: 'Por quê · ' }), p.w),
+    );
+    feedback.hidden = false;
+    proximo.hidden = false;
+    proximo.focus({ preventScroll: true });
+    renderTrack();
+  }
+
+  renderPergunta.responder = responder;
+}
+
+function avancar() {
+  if (!respondida) return;
+  atual++;
+  if (atual < fila.length) renderPergunta();
+  else renderResultado();
+}
+
+function renderResultado() {
+  respondida = false;
+  renderPergunta.responder = null;
+  const acertos = respostas.filter((r) => r.acertou).length;
+  const pct = Math.round((acertos / fila.length) * 100);
+  const erradas = respostas.filter((r) => !r.acertou);
+
+  const porTopico = new Map();
+  for (const r of respostas) {
+    const t = PERGUNTAS[r.idx].t;
+    const s = porTopico.get(t) ?? { ok: 0, total: 0 };
+    s.total++;
+    if (r.acertou) s.ok++;
+    porTopico.set(t, s);
+  }
+
+  const mensagem = pct === 100 ? 'Todas as coletas entregues. Você dominou o módulo.'
+    : pct >= 75 ? 'Rota quase perfeita. Revise os tópicos abaixo.'
+    : pct >= 50 ? 'Metade do caminho. Releia as seções da AULA.md dos tópicos com menos acertos.'
+    : 'Vale reler a AULA.md com calma e tentar de novo.';
+
+  const tabela = el('table', {}, el('tbody', {}, ...[...porTopico].map(([t, s]) =>
+    el('tr', {}, el('td', { textContent: t }),
+      el('td', {}, el('span', { className: 'bar' }, el('i', { style: `width:${(s.ok / s.total) * 100}%` })), `${s.ok}/${s.total}`)))));
+
+  const acoes = el('div', { className: 'actions' });
+  if (erradas.length) {
+    const refazer = el('button', { className: 'btn', type: 'button', textContent: `Refazer as ${erradas.length} que errei` });
+    refazer.addEventListener('click', () => iniciar(erradas.map((r) => r.idx)));
+    acoes.append(refazer);
+  }
+  const tudo = el('button', { className: `btn ${erradas.length ? 'ghost' : ''}`, type: 'button', textContent: 'Recomeçar tudo' });
+  tudo.addEventListener('click', () => iniciar(PERGUNTAS.map((_, i) => i)));
+  acoes.append(tudo);
+
+  const result = el('div', { className: 'result' },
+    el('div', { className: 'score' }, el('b', { textContent: `${pct}%` }), el('span', { textContent: `${acertos} de ${fila.length} corretas` })),
+    el('h2', { textContent: mensagem }),
+    el('section', {}, el('h3', { textContent: 'Acertos por tópico' }), tabela));
+
+  if (erradas.length) {
+    result.append(el('section', {}, el('h3', { textContent: 'Para revisar' }),
+      el('div', { className: 'review' }, ...erradas.map((r) => {
+        const p = PERGUNTAS[r.idx];
+        return el('article', {},
+          el('p', { className: 'q', textContent: p.q }),
+          el('p', { className: 'w', textContent: `Você respondeu: ${r.escolhida}` }),
+          el('p', { className: 'a', textContent: `Correta: ${p.o[0]}` }),
+          el('p', { textContent: p.w }));
+      }))));
+  }
+  result.append(acoes);
+
+  stage.replaceChildren(el('article', { className: 'ticket' },
+    el('div', { className: 'ticket-head' }, el('span', { textContent: 'Resumo operacional' }),
+      el('span', { className: `status ${pct >= 75 ? 'coletada' : 'cancelada'}`, textContent: pct >= 75 ? 'aprovado' : 'revisar' })),
+    result));
+  atual = fila.length - 1;
+  renderTrack();
+  meta.textContent = `fim · ${acertos}/${fila.length}`;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const n = Number(e.key);
+  if (!respondida && n >= 1 && n <= 4 && renderPergunta.responder) {
+    renderPergunta.responder(n - 1);
+  } else if (e.key === 'Enter' && respondida && document.activeElement?.tagName !== 'BUTTON') {
+    avancar();
+  }
+});
+
+iniciar(PERGUNTAS.map((_, i) => i));
+</script>
+</body>
+</html>
